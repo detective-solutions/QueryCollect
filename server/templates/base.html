@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QueryCollect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+<body class="row p-4">
+    <div class="text-center">
+        <img class="img-fluid w-25" src="{{ logo }}" alt="detective-logo">
+    </div>
+    <div class="col-sm-6 col-md-8 mx-auto justify-items-center text-center" id="page-description">
+        <p class="text-center">detective`s</p>
+        <h1 class="text-center">QueryCollect</h1>
+        <div>
+            <a class="btn btn-default" data-bs-toggle="collapse" href="#collapseDescription" role="button" aria-expanded="false" aria-controls="collapseExample">
+                Description
+            </a>
+            <a class="btn btn-default" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+                Example
+            </a>
+            <div class="collapse" id="collapseDescription">
+                <div class="card card-body">
+                    <div id="description-text">
+                        Hi there, thanks for participating on this data collection. In the following section we show you a simple
+                        dataset and ask you to write how archive a given result. write in simple english text and make it as
+                        short as possible.
+                    </div>
+                </div>
+            </div>
+            <div class="collapse" id="collapseExample">
+                <div class="card card-body">
+                    <div class="table"></div>
+                    <div class="query">
+                        Some placeholder content for the collapse component. This panel is hidden by default but revealed when the user activates the relevant trigger.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="table"></div>
+        <form class="response" id="user-inputs" action="/add_query" method="post">
+            <input type="hidden" id="query-type" name="query_type" value="{{ query_type }}">
+            <label class="form-label" for="query-input">get the project with the maximum revenue</label>
+            <textarea class="form-control mx-auto m-2" placeholder="Enter the formula in plain english text" id="query-input" name="query_input"></textarea>
+            <div class="text-right">
+                <span class="material-icons">volunteer_activism</span>
+                0
+            </div>
+            <br>
+            <div class="d-grid gap-2 col-6 mx-auto">
+                <button class="btn btn-primary" type="submit">Send</button>
+                <button class="btn btn-default">Skip</button>
+            </div>
+
+        </form>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
+
+</body>
+
+<style>
+
+    textarea {
+        height: 200px;
+    }
+
+    .btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:visited {
+        background-color: #FC1767 !important;
+        border-color: #FC1767 !important;
+    }
+</style>
+
+</html>

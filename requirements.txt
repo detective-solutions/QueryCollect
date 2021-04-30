@@ -1,0 +1,4 @@
+pandas == 1.1.2
+numpy == v1.19.0
+flask == 1.1.2
+flask_restful==0.3.8
