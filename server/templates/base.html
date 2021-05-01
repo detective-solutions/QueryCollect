@@ -7,68 +7,283 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 </head>
-<body class="row p-4">
-    <div class="text-center">
-        <img class="img-fluid w-25" src="{{ logo }}" alt="detective-logo">
-    </div>
-    <div class="col-sm-6 col-md-8 mx-auto justify-items-center text-center" id="page-description">
-        <p class="text-center">detective`s</p>
-        <h1 class="text-center">QueryCollect</h1>
-        <div>
-            <a class="btn btn-default" data-bs-toggle="collapse" href="#collapseDescription" role="button" aria-expanded="false" aria-controls="collapseExample">
-                Description
-            </a>
-            <a class="btn btn-default" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
-                Example
-            </a>
-            <div class="collapse" id="collapseDescription">
-                <div class="card card-body">
-                    <div id="description-text">
-                        Hi there, thanks for participating on this data collection. In the following section we show you a simple
-                        dataset and ask you to write how archive a given result. write in simple english text and make it as
-                        short as possible.
+<body>
+    <!-- Image and text -->
+    <nav class="navbar navbar-light detective-primary p-2">
+        <a class="navbar-brand text-light" href="#">
+            <img src="{{ logo }}" width="30" height="30" class="d-inline-block align-top" alt="detective-logo">
+            QueryCollect
+        </a>
+    </nav>
+    <div class="row p-4">
+        <div class="col-sm-6 col-md-8 mx-auto justify-items-center text-center" id="page-description">
+
+            <!-- introduction section -->
+            <div class="mb-4">
+                <a class="btn btn-default" data-bs-toggle="collapse" href="#collapseDescription" role="button" aria-expanded="false" aria-controls="collapseExample">
+                    Description
+                </a>
+                <a class="btn btn-default" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+                    Example
+                </a>
+                <div class="collapse" id="collapseDescription">
+                    <div class="card card-body">
+                        <div id="description-text">
+                            Hi there, thanks for participating on this data collection. In the following section we show you a simple
+                            dataset and ask you to write how archive the given result. Write in simple english text and keep it as
+                            natural as possible :).
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse" id="collapseExample">
+                    <div class="card card-body">
+                        <div class="tables">
+                            <div class="row justify-content-center">
+                                <div class="col-auto align-center">
+                                    <p class="fw-bold">input</p>
+                                    <table class="table table-striped" id="input-table-example"></table>
+                                </div>
+                                <div class="col-auto align-center">
+                                    <p class="fw-bold">output</p>
+                                    <table class="table table-striped" id="output-table-example"></table>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="query">
+                            <p class="fw-bold">answer</p>
+                            return members with an age greater than 13
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="collapse" id="collapseExample">
-                <div class="card card-body">
-                    <div class="table"></div>
-                    <div class="query">
-                        Some placeholder content for the collapse component. This panel is hidden by default but revealed when the user activates the relevant trigger.
+
+            <!-- task and response section -->
+            <div id="tables">
+                <!-- input and output table -->
+                <div class="row justify-content-center">
+                    <div class="col-auto align-center">
+                        <p class="fw-bold">input</p>
+                        <table class="table table-striped table-responsive" id="input-table"></table>
                     </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-auto align-center">
+                        <p class="fw-bold">output</p>
+                        <table class="table table-striped table-responsive" id="output-table"></table>
+                    </div>
+                </div>
+            </div>
+            <form class="response" id="user-inputs" action="/add_query" method="post">
+                <input type="hidden" id="query-type" name="query_type" value="{{ query_type }}">
+                <input type="hidden" id="streak" name="streak" value="{{ streak }}">
+                <textarea class="form-control mx-auto m-2" placeholder="request the output table from the input table" id="query-input" name="query_input"></textarea>
+                <div class="text-right">
+
+                    <!-- streak section -->
+                    {% if streak | int < 1 %}
+                    <span class="material-icons" id="streak-indicator-start">volunteer_activism</span>
+                    {% elif 0 < streak | int and streak | int < 3 %}
+                    <span class="material-icons" id="streak-indicator">favorite</span>
+                    {% else %}
+                    <span class="material-icons" id="streak-indicator">local_fire_department</span>
+                    {% endif %}
+                    {{ streak }}
+                </div>
+                <br>
+
+                <!-- send response or skip the question -->
+                <div class="d-grid gap-2 col-6 mx-auto">
+                    <button class="btn btn-primary" type="submit">Send</button>
+                </div>
+
+            </form>
+            <form class="response" id="skip-inputs" action="/skip" method="post">
+                <input type="hidden" id="streak-break" name="streak" value="0">
+                <button class="btn btn-default">Skip</button>
+            </form>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
+        <script>
+
+            let it = {{ input_table|tojson }};
+            let ot = {{ output_table|tojson }};
+
+            let example_input = [
+                {"name": "Micheal", "age": "30", "date": "11/10/1908"},
+                {"name": "Judy", "age": "13", "date": "9/8/2021"},
+                {"name": "Susan", "age": "35", "date": "1/11/1982"},
+            ]
+
+            let example_output = [
+                {"name": "Micheal", "age": "30", "date": "11/10/1908"},
+                {"name": "Susan", "age": "35", "date": "1/11/1982"},
+            ]
+
+            function buildTable(data, target_table_id) {
+                let keys = Object.keys(data[0]);
+                let table = document.getElementById(target_table_id);
+                let thead = document.createElement("thead");
+                let tbody = document.createElement("tbody");
+
+                // create the header row of the table
+                let header_row = document.createElement("tr");
+                for (let h = 0; h<keys.length; h++) {
+                    let th = `<th scope="col" class="col-xs-${h + 1} fs-6">${keys[h]}</th>`
+                    header_row.innerHTML += th;
+                }
+                thead.appendChild(header_row);
+                table.appendChild(thead);
+
+                // create rows for the table
+                for (let r=0; r<data.length; r++) {
+
+                    let row = document.createElement("tr");
+
+                    for (let c=0; c<keys.length; c++) {
+                        let col = `<td class="fs-6">${data[r][keys[c]]}</td>`;
+                        row.innerHTML += col;
+                    }
+                    tbody.appendChild(row);
+                }
+                table.appendChild(tbody);
+            }
+            buildTable(it, "input-table");
+            buildTable(ot, "output-table");
+            buildTable(example_input, "input-table-example");
+            buildTable(example_output, "output-table-example");
+        </script>
+    </div>
+</body>
+<footer>
+    <div class="container mt-2">
+        <div class="row justify-content-center">
+            <div class="col-md-9 text-center">
+                <ul class="list-unstyled nav-links mb-2">
+                    <li class="d-inline m-2"><a class="footer-link" href="mailto:support@detective.solutions">Contact</a></li>
+                    <li class="d-inline m-2"><a class="footer-link" href="https://youtu.be/VB_Tqzzgqh0">About detective</a></li>
+                    <li class="d-inline m-2"><a class="footer-link" href="https://github.com/detective-solutions/QueryCollect">Repository</a></li>
+                </ul>
+                <div class="mb-5">
+                    <h6>
+                        created by detective with
+                        <span class="material-icons d-inline-block align-center" id="streak-indicator">favorite</span>
+                    </h6>
+                    <ul class="list-unstyled form-inline">
+                        <li class="d-inline">
+                            <img src="https://bit.ly/3gV6gIu" alt="python-logo" width="28" height="28" class="d-inline-block align-center"/>
+                        </li>
+                        <li class="d-inline">
+                            <img src="https://bit.ly/3gUfJ2A" alt="docker-logo" width="33" height="30" class="d-inline-block align-center"/>
+                        </li>
+                        <li class="d-inline">
+                            <img src="https://bit.ly/3xDINkS" alt="postgres-logo" width="30" height="30" class="d-inline-block align-center"/>
+                        </li>
+                        <li class="d-inline">
+                            <img src="https://bit.ly/3aX4cvE" alt="azure-logo" width="20" height="20" class="d-inline-block align-center"/>
+                        </li>
+                    </ul>
+                </div>
+                <div class="copyright">
+                    <p class="mb-0"><small>© detective.solutions. All Rights Reserved.</small></p>
                 </div>
             </div>
         </div>
-        <div id="table"></div>
-        <form class="response" id="user-inputs" action="/add_query" method="post">
-            <input type="hidden" id="query-type" name="query_type" value="{{ query_type }}">
-            <label class="form-label" for="query-input">get the project with the maximum revenue</label>
-            <textarea class="form-control mx-auto m-2" placeholder="Enter the formula in plain english text" id="query-input" name="query_input"></textarea>
-            <div class="text-right">
-                <span class="material-icons">volunteer_activism</span>
-                0
-            </div>
-            <br>
-            <div class="d-grid gap-2 col-6 mx-auto">
-                <button class="btn btn-primary" type="submit">Send</button>
-                <button class="btn btn-default">Skip</button>
-            </div>
-
-        </form>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
-
-</body>
-
+</footer>
 <style>
+
+    .footer-link {
+        text-decoration: none;
+        color: white;
+    }
+
+    .footer-link:hover {
+        color: #FC1767;
+    }
+
+    footer {
+        background-color: #0E1C25;
+        color: white;
+        width: 100%;
+        padding: 10px;
+    }
+
+    table {
+        display: inline-block;
+        overflow: hidden;
+    }
 
     textarea {
         height: 200px;
     }
 
+    #streak-indicator {
+        color: #FC1767;
+    }
+
+    #streak-indicator-start {
+        color: #cccccc;
+    }
+
+    .detective-primary {
+        background-color: #0E1C25 !important;
+        color: white !important;
+    }
+
     .btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:visited {
         background-color: #FC1767 !important;
         border-color: #FC1767 !important;
+    }
+
+    /* Extra small devices (phones, 600px and down) */
+    @media only screen and (max-width: 600px) {
+        table {
+            font-size: .6rem;
+        }
+        footer {
+            font-size: .6rem;
+        }
+    }
+
+    /* Small devices (portrait tablets and large phones, 600px and up) */
+    @media only screen and (min-width: 600px) {
+        table {
+            font-size: .6rem;
+        }
+        footer {
+            font-size: .6rem;
+        }
+    }
+
+    /* Medium devices (landscape tablets, 768px and up) */
+    @media only screen and (min-width: 768px) {
+        table {
+            font-size: .8rem;
+        }
+        footer {
+            font-size: .8rem;
+        }
+    }
+
+    /* Large devices (laptops/desktops, 992px and up) */
+    @media only screen and (min-width: 992px) {
+        table {
+            font-size: 1rem;
+        }
+        footer {
+            font-size: 1rem;
+        }
+    }
+
+    /* Extra large devices (large laptops and desktops, 1200px and up) */
+    @media only screen and (min-width: 1200px) {
+        table {
+            font-size: 1.2rem;
+        }
+        footer {
+            font-size: 1.2rem;
+        }
     }
 </style>
 

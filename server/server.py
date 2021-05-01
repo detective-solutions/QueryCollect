@@ -1,17 +1,21 @@
 # import standard modules
 import os
+import random
 
 # import third party modules
-from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template, request, redirect, url_for
 
+# import project related modules
+from generators.tables import QueryTable
 
 # settings
 STATIC_FOLDER = os.path.join('static', 'images')
-
+DATA_FOLDER = os.path.join('static', 'data')
 
 app = Flask(__name__)
 app.config['IMAGES'] = STATIC_FOLDER
+app.config['DATA'] = DATA_FOLDER
 
 # api = Api(app)
 
@@ -19,6 +23,9 @@ app.config['IMAGES'] = STATIC_FOLDER
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+# filter for all query in database
+# query_list = FreeQuery.query.all()
 
 
 # define database model
@@ -35,9 +42,25 @@ def index():
     # get the logo
     logo = os.path.join(app.config['IMAGES'], 'detective_logo.png')
 
-    query_list = FreeQuery.query.all()
-    query_type = 1
-    return render_template("base.html", query_list=query_list, query_type=query_type, logo=logo)
+    # select randomly a query type
+    # query_type = random.choice(list(range(12)))
+    query_type = random.choice(list(range(3)))
+    input_table, output_table = QueryTable().query_task(query_type)
+
+    try:
+        streak = request.args.get('streak')
+        streak = int(streak)
+    except (KeyError, ValueError, TypeError):
+        streak = "0"
+
+    return render_template(
+        "base.html",
+        query_type=query_type,
+        input_table=input_table,
+        output_table=output_table,
+        logo=logo,
+        streak=streak
+    )
 
 
 @app.route("/add_query", methods=["POST"])
@@ -45,6 +68,10 @@ def add_query():
     # add new query
     query_type = request.form.get("query_type")
     free_text_query = request.form.get("query_input")
+    streak = request.form.get("streak", 0)
+
+    print(streak)
+    streak = str(int(streak) + 1)
 
     new_query = FreeQuery(
         query_type=query_type,
@@ -53,7 +80,13 @@ def add_query():
 
     db.session.add(new_query)
     db.session.commit()
-    return redirect(url_for("index"))
+    return redirect(url_for("index", streak=streak))
+
+
+@app.route("/skip", methods=["POST"])
+def skip():
+    streak = request.form.get("streak-break")
+    return redirect(url_for("index", streak=streak))
 
 
 # run app
