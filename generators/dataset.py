@@ -96,25 +96,21 @@ class DataSetGenerator:
     def get_random_strings(cls, size: int = 5, split: bool = False):
         # ascii_letters, digits, punctuation whitespace
         lengths = list(range(2, 5))
-        sections = 2 if split else 1
-        letters = string.ascii_letters + string.digits
+        sections = 2 if split is True else 1
+        letters = string.ascii_letters
         concat_value = random.choice(string.punctuation)
         result_values = list()
 
+        value = lambda: "".join(x for x in random.choices(list(letters), k=random.choice(lengths)))
         for _ in range(size):
-            result_string = ""
-            for s in range(sections):
-                value = "".join(random.choice(letters) for i in range(random.choice(lengths)))
-                if (s < sections-1):
-                    value += concat_value
-                result_string += value
-
+            values = [value() for _ in range(1, sections + 1)]
+            result_string = f"{concat_value}".join(v for v in values)
             result_values.append(result_string)
 
         return result_values
 
     def get_name_strings(self, size: int = 5, split: bool = False):
-        sections = 2 if split else 1
+        sections = random.choice([2, 3]) if split else 1
         concat_value = random.choice(string.punctuation) if split else " "
         result_values = list()
         for i in range(size):
@@ -123,11 +119,25 @@ class DataSetGenerator:
 
         return result_values
 
-    def generate_string_column(self, size: int, split: bool = False, names: bool = False):
+    def generate_string_column(self, size: int, split: bool = False, names: bool = False, duplicates: bool = True) -> list:
         if names:
-            return self.get_name_strings(size=size, split=split)
+            values = self.get_name_strings(size=size, split=split)
         else:
-            return self.get_random_strings(size=size, split=split)
+            values = self.get_random_strings(size=size, split=split)
+
+        if duplicates:
+            # pick a random index and replace another index with the value of the selected index
+            indexes = list(range(size))
+            to_copy_index = random.choice(indexes)
+            to_copy_value = values[to_copy_index]
+            indexes.remove(to_copy_index)
+            print(indexes, to_copy_value, to_copy_index)
+            to_replace = random.choices(indexes, k=random.choice([1, 2]))
+
+            for i in to_replace:
+                values[i] = to_copy_value
+
+        return values
 
     @classmethod
     def generate_int_column(cls, size: int, *args, **kwargs):
@@ -137,7 +147,7 @@ class DataSetGenerator:
     def generate_float_column(cls, size: int, *args, **kwargs):
         return np.round(np.random.randn(size), 2)
 
-    def generate(self, schema, duplicates: bool = False) -> pd.DataFrame:
+    def generate(self, schema) -> pd.DataFrame:
 
         data = dict()
         values = {
@@ -150,8 +160,9 @@ class DataSetGenerator:
 
             dtp = str(column["type"])
             name_column = column.get("names", False)
-            to_split = column.get("names", False)
+            to_split = column.get("split", False)
+            duplicates = column.get("duplicates", False)
             column_name = self.column_name_generator(d_type=dtp, names=name_column)
-            data[column_name] = values[dtp](5, split=to_split, names=name_column)
+            data[column_name] = values[dtp](5, split=to_split, names=name_column, duplicates=duplicates)
 
         return pd.DataFrame(data)

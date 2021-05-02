@@ -1,5 +1,6 @@
 # import standard modules
 import random
+import string
 
 # import third party modules
 import numpy as np
@@ -38,7 +39,6 @@ class QueryTable:
                 {"type": random.choice([float, int])},
                 {"type": random.choice([float, int])}
             ],
-            duplicates=False
         )
 
         # select a random column of both and select
@@ -59,7 +59,6 @@ class QueryTable:
                 {"type": str, "split": random.choice([True, False]), "names": random.choice([True, False])},
                 {"type": random.choice([float, int])}
             ],
-            duplicates=False
         )
 
         # select a random column of both and select
@@ -77,7 +76,6 @@ class QueryTable:
                 {"type": random.choice([float, int])},
                 {"type": random.choice([float, int])}
             ],
-            duplicates=False
         )
 
         columns = input_data.columns.tolist()
@@ -96,13 +94,67 @@ class QueryTable:
         return input_data.to_dict("records"), output_data.to_dict("records")
 
     def row_count(self):
-        pass
+
+        # generate a random dataset with two numerical and one string column
+        input_data = self.data_generator.generate(
+            schema=[
+                {"type": str, "split": random.choice([True, False]), "names": random.choice([True, False])},
+                {"type": str, "split": random.choice([True, False]), "names": random.choice([True, False])},
+                {"type": str, "split": random.choice([True, False]), "names": random.choice([True, False])},
+            ],
+        )
+
+        # get random column
+        column_to_count = random.choice(input_data.columns.tolist())
+        output_data = input_data.loc[:, [column_to_count]][column_to_count].value_counts()
+
+        return input_data.to_dict("records"), output_data.to_dict("records")
 
     def split_column(self):
-        pass
+
+        # generate a random dataset with two numerical and one string column
+        input_data = self.data_generator.generate(
+            schema=[
+                {"type": str, "split": True, "names": random.choice([False, True])},
+            ],
+        )
+
+        # get the split value by counting by identifying the punctuation symbol - same for the entire column
+        column_name = input_data.columns.tolist()[0]
+        example = input_data[column_name].tolist()[0]
+        split_value = [x for x in example if x in list(string.punctuation)][0]
+
+        splits = input_data[column_name].str.split(split_value, n=-1, expand=True)
+        output_data = input_data.copy()
+        for ix in range(splits.shape[1]):
+            output_data[f"{column_name}_{ix}"] = splits[ix]
+
+        return input_data.to_dict("records"), output_data.to_dict("records")
 
     def group_data(self):
-        pass
+
+        # generate a random dataset with two numerical and one string column
+        input_data = self.data_generator.generate(
+            schema=[
+                {"type": str, "split": False, "names": random.choice([False, True]), "duplicates": True}
+                for _ in range(random.choice([1, 2]))
+
+            ] + [
+                {"type": int}
+                for _ in range(random.choice([1, 2]))
+            ],
+        )
+
+        # get the string column we will group by
+        d_types = list(zip(input_data.columns.tolist(), input_data.dtypes.tolist()))
+        string_columns = [x[0] for x in d_types if str(x[1]) == "object"]
+        int_columns = list(set(input_data.columns.tolist()) - set(string_columns))
+
+        actions = random.choices(["max", "min", "sum"], k=len(int_columns))
+        aggregates = dict(zip(int_columns, actions))
+        output_data = input_data.groupby(string_columns).agg(actions).reset_index()
+
+        print(output_data)
 
     def sort_data(self):
         pass
@@ -124,3 +176,5 @@ class QueryTable:
 
     def query_task(self, q_type: int):
         return self.query_type[q_type]()
+
+print(QueryTable().group_data())
