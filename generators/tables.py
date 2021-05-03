@@ -29,15 +29,30 @@ class QueryTable:
             11: self.calculate_column
         }
 
+    @classmethod
+    def rand_bool(cls):
+        return random.choice([False, True])
+    
+    @classmethod
+    def rand_num(cls):
+        return random.choice([float, int])
+
+    @classmethod
+    def create_missing(cls, values: list) -> list:
+        idx_to_replace = random.choices(list(range(5)), k=random.choice(list(range(1, 4))))
+        for ix in idx_to_replace:
+            values[ix] = np.nan
+        return values
+
     def row_filter(self):
         """provide and example where the data set is filtered on one or multiple values"""
 
         # generate a random dataset with two numerical and one string column
         input_data = self.data_generator.generate(
             schema=[
-                {"type": str, "split": random.choice([True, False]), "names": random.choice([True, False])},
-                {"type": random.choice([float, int])},
-                {"type": random.choice([float, int])}
+                {"type": str, "split": self.rand_bool(), "names": self.rand_bool()},
+                {"type": self.rand_num()},
+                {"type": self.rand_num()}
             ],
         )
 
@@ -56,7 +71,7 @@ class QueryTable:
         input_data = self.data_generator.generate(
             schema=[
                 {"type": random.choice([float, int])},
-                {"type": str, "split": random.choice([True, False]), "names": random.choice([True, False])},
+                {"type": str, "split": self.rand_bool(), "names": self.rand_bool()},
                 {"type": random.choice([float, int])}
             ],
         )
@@ -73,8 +88,8 @@ class QueryTable:
         # generate a random dataset with two numerical and one string column
         input_data = self.data_generator.generate(
             schema=[
-                {"type": random.choice([float, int])},
-                {"type": random.choice([float, int])}
+                {"type": self.rand_num()},
+                {"type": self.rand_num()}
             ],
         )
 
@@ -98,9 +113,9 @@ class QueryTable:
         # generate a random dataset with two numerical and one string column
         input_data = self.data_generator.generate(
             schema=[
-                {"type": str, "split": random.choice([True, False]), "names": random.choice([True, False])},
-                {"type": str, "split": random.choice([True, False]), "names": random.choice([True, False])},
-                {"type": str, "split": random.choice([True, False]), "names": random.choice([True, False])},
+                {"type": str, "split": self.rand_bool(), "names": self.rand_bool()},
+                {"type": str, "split": self.rand_bool(), "names": self.rand_bool()},
+                {"type": str, "split": self.rand_bool(), "names": self.rand_bool()},
             ],
         )
 
@@ -115,7 +130,7 @@ class QueryTable:
         # generate a random dataset with two numerical and one string column
         input_data = self.data_generator.generate(
             schema=[
-                {"type": str, "split": True, "names": random.choice([False, True])},
+                {"type": str, "split": True, "names": self.rand_bool()},
             ],
         )
 
@@ -136,7 +151,7 @@ class QueryTable:
         # generate a random dataset with two numerical and one string column
         input_data = self.data_generator.generate(
             schema=[
-                {"type": str, "split": False, "names": random.choice([False, True]), "duplicates": True}
+                {"type": str, "split": False, "names": self.rand_bool(), "duplicates": True}
                 for _ in range(random.choice([1, 2]))
 
             ] + [
@@ -152,29 +167,126 @@ class QueryTable:
 
         actions = random.choices(["max", "min", "sum"], k=len(int_columns))
         aggregates = dict(zip(int_columns, actions))
-        output_data = input_data.groupby(string_columns).agg(actions).reset_index()
 
-        print(output_data)
+        renaming = dict()
+        for i in range(len(int_columns)):
+            int_column = int_columns[i]
+            renaming[int_column] = f"{int_columns[i]}_{aggregates[int_columns[i]]}"
+
+        output_data = input_data.groupby(string_columns).agg(aggregates).reset_index()
+        output_data = output_data.rename(columns=renaming)
+
+        return input_data.to_dict("records"), output_data.to_dict("records")
 
     def sort_data(self):
-        pass
+
+        # generate a random dataset with two numerical and one string column
+        input_data = self.data_generator.generate(
+            schema=[
+                       {"type": str, "split": False, "names": self.rand_bool(), "duplicates": False}
+                       for _ in range(random.choice([1, 2]))
+                   ] + [
+                       {"type": self.rand_num()}
+                   ],
+        )
+
+        # get numerical column to sort by
+        d_types = list(zip(input_data.columns.tolist(), input_data.dtypes.tolist()))
+        numerical_column = [x[0] for x in d_types if str(x[1]) in ("float32", "int32")][0]
+
+        output_data = input_data.copy()
+        output_data = output_data.sort_values(by=numerical_column, ascending=self.rand_bool())
+
+        return input_data.to_dict("records"), output_data.to_dict("records")
 
     def drop_columns(self):
-        pass
+
+        input_data = self.data_generator.generate(
+            schema=[
+                       {"type": str, "split": False, "names": self.rand_bool(), "duplicates": False}] + [
+                       {"type": self.rand_num()} for _ in range(random.choice([1, 2]))
+            ],
+        )
+
+        # get a random column to drop
+        to_drop = random.choice(input_data.columns.tolist())
+        output_data = input_data.drop(to_drop, axis=1)
+        return input_data.to_dict("records"), output_data.to_dict("records")
 
     def fill_missing_values(self):
-        pass
+
+        input_data = self.data_generator.generate(
+            schema=[
+                       {"type": str, "split": False, "names": self.rand_bool(), "duplicates": False}] + [
+                       {"type": self.rand_num()} for _ in range(random.choice([1, 2]))
+                   ],
+        )
+
+        # select randomly a column to enter missing values
+        na_column = random.choice(input_data.columns.tolist())
+        input_data[na_column] = self.create_missing(input_data[na_column].tolist())
+
+        # get the data type of the column
+        d_type = str(input_data[na_column].dtype)
+
+        # select a random fill value
+        fill_values = {"float64": [.0], "int32": [0], "object": ["#", "no_value"]}
+        output_data = input_data.fillna(random.choice(fill_values[d_type]))
+
+        return input_data.to_dict("records"), output_data.to_dict("records")
 
     def drop_duplicates(self):
-        pass
+        input_data = self.data_generator.generate(
+            schema=[
+                       {"type": str, "split": False, "names": self.rand_bool(), "duplicates": False}] + [
+                       {"type": self.rand_num()} for _ in range(random.choice([1, 2]))
+                   ],
+        )
+
+        # get random entries
+        indexes = random.choices(list(range(5)), k=random.choice([1, 2]))
+        not_selected = list(set(list(range(5))) - set(indexes))
+
+        input_data = (input_data.iloc[not_selected]
+                      .append(input_data.iloc[indexes].copy())
+                      .append(input_data.iloc[indexes].copy())
+                      ).reset_index(drop=True)
+
+        output_data = input_data.drop_duplicates()
+        return input_data.to_dict("records"), output_data.to_dict("records")
 
     def drop_na(self):
-        pass
+        input_data = self.data_generator.generate(
+            schema=[
+                       {"type": str, "split": False, "names": self.rand_bool(), "duplicates": False}] + [
+                       {"type": self.rand_num()} for _ in range(random.choice([1, 2]))
+                   ],
+        )
+
+        # select randomly a column to enter missing values
+        na_column = random.choice(input_data.columns.tolist())
+        input_data[na_column] = self.create_missing(input_data[na_column].tolist())
+
+        output_data = input_data.dropna()
+        return input_data.to_dict("records"), output_data.to_dict("records")
 
     def calculate_column(self):
-        pass
+
+        string_columns = [
+            {"type": str, "split": False, "names": self.rand_bool(), "duplicates": False}
+            for _ in range(random.choice([2, 3]))
+        ]
+
+        numerical_columns = [
+            {"type": self.rand_num()} for _ in range(random.choice([1, 2]))
+        ]
+
+        input_data = self.data_generator.generate(
+            schema=random.choice([string_columns, numerical_columns])
+        )
 
     def query_task(self, q_type: int):
         return self.query_type[q_type]()
 
-print(QueryTable().group_data())
+
+print(QueryTable().drop_na())

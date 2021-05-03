@@ -131,7 +131,6 @@ class DataSetGenerator:
             to_copy_index = random.choice(indexes)
             to_copy_value = values[to_copy_index]
             indexes.remove(to_copy_index)
-            print(indexes, to_copy_value, to_copy_index)
             to_replace = random.choices(indexes, k=random.choice([1, 2]))
 
             for i in to_replace:
