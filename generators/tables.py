@@ -123,8 +123,9 @@ class QueryTable:
         # get random column
         column_to_count = random.choice(input_data.columns.tolist())
         output_data = input_data.loc[:, [column_to_count]][column_to_count].value_counts().reset_index()
-        print(column_to_count)
-        print(output_data)
+
+        # TODO: Rename columns, order columns and duplicate rows so some counts are more than one
+
         return input_data.to_dict("records"), output_data.to_dict("records")
 
     def split_column(self):
