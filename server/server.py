@@ -44,9 +44,9 @@ def index():
 
     # select randomly a query type
     # query_type = random.choice(list(range(12)))
-    query_type = random.choice(list(range(3)))
+    query_type = 3 # random.choice(list(range(12)))
     input_table, output_table = QueryTable().query_task(query_type)
-
+    print(input_table, output_table)
     try:
         streak = request.args.get('streak')
         streak = int(streak)
@@ -69,8 +69,6 @@ def add_query():
     query_type = request.form.get("query_type")
     free_text_query = request.form.get("query_input")
     streak = request.form.get("streak", 0)
-
-    print(streak)
     streak = str(int(streak) + 1)
 
     new_query = FreeQuery(

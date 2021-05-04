@@ -1,6 +1,7 @@
 # import standard modules
 import random
 import string
+import operator
 
 # import third party modules
 import numpy as np
@@ -121,8 +122,9 @@ class QueryTable:
 
         # get random column
         column_to_count = random.choice(input_data.columns.tolist())
-        output_data = input_data.loc[:, [column_to_count]][column_to_count].value_counts()
-
+        output_data = input_data.loc[:, [column_to_count]][column_to_count].value_counts().reset_index()
+        print(column_to_count)
+        print(output_data)
         return input_data.to_dict("records"), output_data.to_dict("records")
 
     def split_column(self):
@@ -278,15 +280,38 @@ class QueryTable:
         ]
 
         numerical_columns = [
-            {"type": self.rand_num()} for _ in range(random.choice([1, 2]))
+            {"type": self.rand_num()} for _ in range(random.choice([2, 3]))
         ]
 
         input_data = self.data_generator.generate(
             schema=random.choice([string_columns, numerical_columns])
         )
 
+        operations = {
+            "add": operator.add,
+            "subtract": operator.sub,
+            "multiply": operator.mul,
+            "divide": operator.truediv
+        }
+
+        d_types = list(zip(input_data.columns.tolist(), input_data.dtypes.tolist()))
+
+        if all([str(x[1]) == "object" for x in d_types]):
+            # only option for string is concat. substrings are not included yet
+            concat_style = random.choice(["_", "-", " "])
+            columns = random.sample(input_data.columns.tolist(), k=2)
+            output_data = input_data.loc[:, columns]
+            output_data["combination"] = output_data[columns[0]] + concat_style + output_data[columns[1]]
+
+        else:
+            columns = random.sample(input_data.columns.tolist(), k=2)
+            output_data = input_data.loc[:, columns]
+            func = random.choice(["add", "subtract", "multiply", "divide"])
+            new_column = f"{random.choice(columns)}_{func}"
+            output_data[new_column] = operations[func](output_data[columns[0]], output_data[columns[1]])
+
+        return input_data.to_dict("records"), output_data.to_dict("records")
+
     def query_task(self, q_type: int):
+        print(q_type)
         return self.query_type[q_type]()
-
-
-print(QueryTable().drop_na())
