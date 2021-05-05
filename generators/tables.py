@@ -120,11 +120,19 @@ class QueryTable:
             ],
         )
 
+        # get random entries
+        indexes = random.choices(list(range(5)), k=random.choice([1, 2]))
+        not_selected = list(set(list(range(5))) - set(indexes))
+
+        input_data = (input_data.iloc[not_selected]
+                      .append(input_data.iloc[indexes].copy())
+                      .append(input_data.iloc[indexes].copy())
+                      ).reset_index(drop=True)
+
         # get random column
         column_to_count = random.choice(input_data.columns.tolist())
         output_data = input_data.loc[:, [column_to_count]][column_to_count].value_counts().reset_index()
-
-        # TODO: Rename columns, order columns and duplicate rows so some counts are more than one
+        output_data.rename(columns={"index": column_to_count, column_to_count: "count"}, inplace=True)
 
         return input_data.to_dict("records"), output_data.to_dict("records")
 

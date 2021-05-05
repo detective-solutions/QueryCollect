@@ -1,15 +1,20 @@
 # import standard modules
 import os
+import uuid
 import random
+from dotenv import load_dotenv
 
 # import third party modules
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, render_template, request, redirect, url_for
 
 # import project related modules
+from server.models import db, FreeQuery
 from generators.tables import QueryTable
 
 # settings
+load_dotenv()
 STATIC_FOLDER = os.path.join('static', 'images')
 DATA_FOLDER = os.path.join('static', 'data')
 
@@ -17,22 +22,14 @@ app = Flask(__name__)
 app.config['IMAGES'] = STATIC_FOLDER
 app.config['DATA'] = DATA_FOLDER
 
-# api = Api(app)
-
 # set up the database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
 
-# filter for all query in database
-# query_list = FreeQuery.query.all()
-
-
-# define database model
-class FreeQuery(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    query_type = db.Column(db.Integer)
-    free_text_query = db.Column(db.String(400))
+db.init_app(app)
+app.app_context().push()
+db.create_all()
+migrate = Migrate(app, db)
 
 
 # main page to collect queries
@@ -43,10 +40,9 @@ def index():
     logo = os.path.join(app.config['IMAGES'], 'detective_logo.png')
 
     # select randomly a query type
-    # query_type = random.choice(list(range(12)))
-    query_type = 3 # random.choice(list(range(12)))
+    query_type = random.choice(list(range(12)))
     input_table, output_table = QueryTable().query_task(query_type)
-    print(input_table, output_table)
+
     try:
         streak = request.args.get('streak')
         streak = int(streak)
@@ -72,6 +68,7 @@ def add_query():
     streak = str(int(streak) + 1)
 
     new_query = FreeQuery(
+        id=uuid.uuid1(),
         query_type=query_type,
         free_text_query=free_text_query
     )
@@ -89,5 +86,5 @@ def skip():
 
 # run app
 if __name__ == '__main__':
-    db.create_all()                              # create a new database at launch
+    # db.create_all()                              # create a new database at launch
     app.run(host='0.0.0.0', port=81, debug=True)
