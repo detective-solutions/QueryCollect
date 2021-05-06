@@ -1,5 +1,5 @@
-from server.settings import app
-from server.views import index, add_query, skip
+from settings import app
+from views import index, add_query, skip
 
 # set urls
 app.add_url_rule('/', 'index', index, methods=["GET"])

@@ -6,9 +6,10 @@ from flask import Flask
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from server.models import db, FreeQuery
 
 # import project related modules
+from models import db, FreeQuery
+
 
 # create a app instance
 app = Flask(__name__)

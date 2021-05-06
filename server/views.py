@@ -7,8 +7,8 @@ import random
 from flask import Flask, render_template, request, redirect, url_for
 
 # import project related modules
-from server.settings import app, db
-from server.models import FreeQuery
+from settings import app, db
+from models import FreeQuery
 from generators.tables import QueryTable
 
 

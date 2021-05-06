@@ -10,7 +10,8 @@ WORKDIR /app
 
 RUN pip install -r requirements.txt
 
-COPY ./pandas_module /app/server/pandas_module
+COPY .env /app
+COPY ./generators /app/server/generators
 COPY ./server /app/server
 
-CMD ["python", "server/server.py" ]
+CMD ["python", "server/app.py" ]
