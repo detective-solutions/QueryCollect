@@ -14,4 +14,6 @@ COPY .env /app
 COPY ./generators /app/server/generators
 COPY ./server /app/server
 
+EXPOSE 8080
+
 CMD ["python", "server/app.py" ]

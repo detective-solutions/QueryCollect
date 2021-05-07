@@ -27,25 +27,27 @@ class DataSetGenerator:
     def __init__(self):
 
         # set a pre set of values to choose from when creating a new dataset
-        self.data_path = "./server/static/data/names.csv"
-        self.names = pd.read_csv(self.data_path, header=None).loc[:, 0].tolist()
-
         self.dtypes = {
             "<class 'str'>": ["", "Txt"],
-            "<class 'int'>": ["", "Lat", "Lon", "Size", "HS", "Id", "Total", "Dim", "Distance", "Duration"],
-            "<class 'float'>": ["", "Pct", "Weight", "Kg", "Ton", "Price", "Brutto", "Netto", "Estimate"]
+            "<class 'int'>": self.load_vocabulary("./server/static/data/int_words.csv"),
+            "<class 'float'>": self.load_vocabulary("./server/static/data/float_words.csv")
         }
-
-        self.word_map = [
-            "Project", "Address", "Plant", "Screen",
-            "Package", "Response", "Tech", "Technology", "Preview", "Connection"
-        ]
-
-        self.name_column_word_map = [
-            "Name", "Customer", "Contact", "Consumer", "Manager", "Responsible", "Prospect"
-        ]
-
+        self.word_map = self.load_vocabulary("./server/static/data/string_words.csv")
+        self.name_column_word_map = self.load_vocabulary("./server/static/data/name_words.csv")
         self.numbers = [""] + [str(x) for x in range(0, 10)]
+        self.names = self.load_vocabulary("./server/static/data/names.csv")
+
+    @classmethod
+    def load_vocabulary(cls, path: str) -> list:
+        """
+        function to load a vocabulary from the static data csv files
+
+        :param path: relative path to the location
+        :return: list object containing all words from the vocabulary specified in the csv file
+        """
+
+        # load csv file as pandas object
+        return pd.read_csv(path, header=None).loc[:, 1].tolist()
 
     @classmethod
     def word_style(cls, word: str, style: int) -> str:
@@ -114,7 +116,7 @@ class DataSetGenerator:
             words = [words]
 
         column_name = f"{concat_style}".join(
-            self.word_style(word, w_style()) for word in words
+            self.word_style(str(word), w_style()) for word in words
         ) + random.choice(self.dtypes[d_type])
 
         return self.column_name_clean(column_name, d_type=d_type, names=names)
