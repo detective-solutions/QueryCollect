@@ -20,16 +20,18 @@ def index():
     # get the logo from the static files
     logo = os.path.join(app.config['IMAGES'], 'detective_logo.png')
 
-    # select randomly a query type - random choice provides a uniform distribution
-    query_type = random.choice(list(range(12)))
-    input_table, output_table = QueryTable().query_task(query_type)
-
-    # in case the incoming url holds a streak value than get it and convert it to int
     try:
+        # select randomly a query type - random choice provides a uniform distribution
+        query_type = random.choice(list(range(12)))
+        input_table, output_table = QueryTable().query_task(query_type)
+
+        # in case the incoming url holds a streak value than get it and convert it to int
         streak = request.args.get('streak')
         streak = int(streak)
+
     except (KeyError, ValueError, TypeError):
         streak = "0"
+        redirect(url_for("index", streak=streak))
 
     return render_template(
         "base.html",
