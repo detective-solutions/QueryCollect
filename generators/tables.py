@@ -154,7 +154,11 @@ class QueryTable:
         rename_map[column_to_select] = new_name
         output_data = input_data.loc[:, columns].rename(columns=rename_map)
 
-        return input_data.to_dict("records"), output_data.to_dict("records")
+        # create a new order
+        index_of_renamed = columns.index(column_to_select)
+        columns[index_of_renamed] = new_name
+
+        return input_data.to_dict("records"), output_data.loc[:, columns].to_dict("records")
 
     def row_count(self) -> tuple:
         """
@@ -278,7 +282,7 @@ class QueryTable:
 
         # get numerical column to sort by
         d_types = list(zip(input_data.columns.tolist(), input_data.dtypes.tolist()))
-        numerical_column = [x[0] for x in d_types if str(x[1]) in ("float32", "int32")][0]
+        numerical_column = [x[0] for x in d_types if str(x[1]) in ("float64", "int32")][0]
 
         # create the output dataset
         output_data = input_data.copy()

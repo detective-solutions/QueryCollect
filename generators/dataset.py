@@ -117,7 +117,7 @@ class DataSetGenerator:
 
         column_name = f"{concat_style}".join(
             self.word_style(str(word), w_style()) for word in words
-        ) + random.choice(self.dtypes[d_type])
+        ) # + random.choice(str(self.dtypes[d_type]))
 
         return self.column_name_clean(column_name, d_type=d_type, names=names)
 
