@@ -8,3 +8,4 @@ SQLAlchemy==1.4.12
 python-dotenv==0.17.1
 psycopg2-binary==2.8.6
 PyMySQL==1.0.2
+random-tables==0.0.5
