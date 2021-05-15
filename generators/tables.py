@@ -81,12 +81,14 @@ class QueryTable:
         """
 
         # generate a random dataset with two numerical and one string column
+        schema = random.choice([
+            {"type": str, "split": self.rand_bool(), "names": self.rand_bool()},
+            {"type": self.rand_num()},
+            {"type": self.rand_num()}
+        ])
+
         input_data = self.data_generator.generate(
-            schema=[
-                {"type": str, "split": self.rand_bool(), "names": self.rand_bool()},
-                {"type": self.rand_num()},
-                {"type": self.rand_num()}
-            ],
+            schema=[schema],
         )
 
         str_operations = [operator.eq, operator.ne]
@@ -100,7 +102,7 @@ class QueryTable:
         column_dtype = input_data.loc[:, [column_to_select]].dtypes
         column_dtype = str(list(column_dtype)[0])
 
-        operations = num_operations if column_dtype in ["float64", "int32"] else str_operations
+        operations = num_operations if column_dtype in ["float64", "int32", "int64", "float32"] else str_operations
 
         # create an output dataset
         row_filter = random.choice(operations)
@@ -289,7 +291,7 @@ class QueryTable:
 
         # get numerical column to sort by
         d_types = list(zip(input_data.columns.tolist(), input_data.dtypes.tolist()))
-        numerical_column = [x[0] for x in d_types if str(x[1]) in ("float64", "int32")][0]
+        numerical_column = [x[0] for x in d_types if str(x[1]) in ("float64", "int32", "int64")][0]
 
         # create the output dataset
         output_data = input_data.copy()
