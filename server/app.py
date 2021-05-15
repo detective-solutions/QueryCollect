@@ -10,4 +10,4 @@ app.add_url_rule('/skip', 'skip', skip, methods=["GET"])
 # run app
 if __name__ == '__main__':
     # db.create_all()                              # create a new database at launch
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=False)

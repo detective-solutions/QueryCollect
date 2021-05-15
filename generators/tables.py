@@ -6,9 +6,7 @@ import operator
 # import third party modules
 import numpy as np
 import pandas as pd
-
-# import project related modules
-from generators.dataset import DataSetGenerator
+from randomtables import DataSetGenerator
 
 
 class QueryTable:
@@ -83,21 +81,32 @@ class QueryTable:
         """
 
         # generate a random dataset with two numerical and one string column
+        schema = random.choice([
+            {"type": str, "split": self.rand_bool(), "names": self.rand_bool()},
+            {"type": self.rand_num()},
+            {"type": self.rand_num()}
+        ])
+
         input_data = self.data_generator.generate(
-            schema=[
-                {"type": str, "split": self.rand_bool(), "names": self.rand_bool()},
-                {"type": self.rand_num()},
-                {"type": self.rand_num()}
-            ],
+            schema=[schema],
         )
 
-        # select a random column of both and select
+        str_operations = [operator.eq, operator.ne]
+        num_operations = [operator.lt, operator.le, operator.ge, operator.gt] + str_operations
+
+        # select a random column to pick a random value to filter for
         columns = input_data.columns.tolist()
         column_to_select = random.choice(columns)
-        new_name = self.data_generator.column_name_generator(d_type="<class 'int'>")
+        filter_value = random.choice(input_data[column_to_select].tolist())
+
+        column_dtype = input_data.loc[:, [column_to_select]].dtypes
+        column_dtype = str(list(column_dtype)[0])
+
+        operations = num_operations if column_dtype in ["float64", "int32", "int64", "float32"] else str_operations
 
         # create an output dataset
-        output_data = input_data.loc[:, columns].rename(columns={column_to_select: new_name})
+        row_filter = random.choice(operations)
+        output_data = input_data.loc[row_filter(input_data[column_to_select], filter_value)]
 
         return input_data.to_dict("records"), output_data.to_dict("records")
 
@@ -282,7 +291,7 @@ class QueryTable:
 
         # get numerical column to sort by
         d_types = list(zip(input_data.columns.tolist(), input_data.dtypes.tolist()))
-        numerical_column = [x[0] for x in d_types if str(x[1]) in ("float64", "int32")][0]
+        numerical_column = [x[0] for x in d_types if str(x[1]) in ("float64", "int32", "int64")][0]
 
         # create the output dataset
         output_data = input_data.copy()
@@ -469,3 +478,10 @@ class QueryTable:
         :return: tuple with lists of records for input, output
         """
         return self.query_type[q_type]()
+
+
+qt = QueryTable()
+i, o = qt.query_task(0)
+print(i)
+
+print(o)
